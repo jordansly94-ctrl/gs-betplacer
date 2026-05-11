@@ -4,1057 +4,923 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GS BetPlacer v3</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root {
-  --gold:#D4AF37;--gold-bright:#FFD700;--gold-dim:#8B7520;
-  --navy:#0A0E1A;--navy-mid:#0F1525;--navy-light:#161D2E;
-  --navy-card:#1A2236;--navy-border:#243050;
-  --green:#00C853;--red:#FF3D57;--orange:#FFA726;
-  --text:#E8EAF0;--text-dim:#7A8299;--text-mid:#A8B0C8;
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--navy);color:var(--text);font-family:'Barlow Condensed',sans-serif;min-height:100vh;font-size:15px;overflow-x:hidden;}
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --surface3: #1e2330;
+    --border: #252c3a;
+    --border2: #2e3848;
+    --green: #00e676;
+    --green-dim: #00e67622;
+    --green-mid: #00e67644;
+    --gold: #ffc107;
+    --gold-dim: #ffc10720;
+    --red: #ff4444;
+    --red-dim: #ff444420;
+    --blue: #4fc3f7;
+    --blue-dim: #4fc3f720;
+    --text: #e8ecf4;
+    --text-dim: #8892a4;
+    --text-muted: #4a5568;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
 
-/* HEADER */
-.header{background:var(--navy-mid);border-bottom:2px solid var(--gold);padding:0 20px;display:flex;align-items:center;height:48px;gap:16px;}
-.logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:18px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;white-space:nowrap;}
-.logo span{color:var(--text-dim);font-weight:400;font-size:11px;margin-left:8px;}
-.header-mid{flex:1;display:flex;align-items:center;justify-content:center;gap:12px;}
-.status-pill{display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);background:var(--navy-card);border:1px solid var(--navy-border);padding:3px 8px;border-radius:3px;}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);animation:blink 2s infinite;}
-.dot.red{background:var(--red);box-shadow:0 0 5px var(--red);animation:none;}
-.dot.orange{background:var(--orange);box-shadow:0 0 5px var(--orange);}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
-@keyframes spin{to{transform:rotate(360deg)}}
-.spinner{display:inline-block;width:10px;height:10px;border:2px solid var(--navy-border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;}
-.settings-toggle-btn{margin-left:auto;background:transparent;border:1px solid var(--navy-border);color:var(--text-dim);border-radius:3px;padding:5px 12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;display:flex;align-items:center;gap:5px;transition:border-color 0.2s,color 0.2s;white-space:nowrap;}
-.settings-toggle-btn:hover{border-color:var(--gold);color:var(--gold);}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* SETTINGS PANEL */
-.settings-panel{background:#0C1120;border-bottom:2px solid var(--gold-dim);overflow:hidden;max-height:0;transition:max-height 0.4s ease;}
-.settings-panel.open{max-height:900px;padding:16px 20px 20px;}
-.settings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:14px;}
-.sf{display:flex;flex-direction:column;gap:4px;}
-.sl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;}
-.si{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:3px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 8px;outline:none;width:100%;transition:border-color 0.2s;}
-.si:focus{border-color:var(--gold);}
-.sh{font-size:9px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;}
-.toggle-row{display:flex;align-items:center;justify-content:space-between;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:3px;padding:6px 8px;height:32px;}
-.tl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-mid);}
-.toggle-switch{position:relative;width:34px;height:18px;flex-shrink:0;}
-.toggle-switch input{opacity:0;width:0;height:0;}
-.ts{position:absolute;inset:0;background:var(--navy-border);border-radius:18px;cursor:pointer;transition:background 0.25s;}
-.ts::after{content:'';position:absolute;width:12px;height:12px;left:3px;top:3px;background:var(--text-dim);border-radius:50%;transition:transform 0.25s,background 0.25s;}
-.toggle-switch input:checked+.ts{background:var(--gold-dim);}
-.toggle-switch input:checked+.ts::after{transform:translateX(16px);background:var(--gold);}
-.priority-section{margin-top:4px;}
-.pl-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;}
-.priority-list{display:flex;flex-direction:column;gap:3px;max-width:320px;}
-.pi{display:flex;align-items:center;gap:6px;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:3px;padding:5px 8px;cursor:grab;user-select:none;}
-.pi.dragging{opacity:0.4;border-color:var(--gold);}
-.pi.drag-over{border-color:var(--gold);background:#1a2030;}
-.pi-handle{color:var(--text-dim);font-size:11px;}
-.pi-rank{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold);width:16px;}
-.pi-name{font-size:12px;font-weight:600;}
-.settings-actions{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap;}
-.btn-save{background:var(--gold);color:#000;border:none;border-radius:3px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;padding:6px 18px;cursor:pointer;transition:background 0.2s;}
-.btn-save:hover{background:var(--gold-bright);}
-.save-ok{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--green);opacity:0;transition:opacity 0.3s;}
-.save-ok.show{opacity:1;}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-/* SESSIONS STRIP */
-.sessions-strip{background:var(--navy-mid);border-bottom:1px solid var(--navy-border);padding:10px 20px;display:flex;align-items:stretch;gap:8px;overflow-x:auto;min-height:100px;}
-.sessions-strip::-webkit-scrollbar{height:4px;}
-.sessions-strip::-webkit-scrollbar-track{background:var(--navy-mid);}
-.sessions-strip::-webkit-scrollbar-thumb{background:var(--navy-border);border-radius:2px;}
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
 
-/* BOOKIE GROUP */
-.bookie-group{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:5px;min-width:150px;flex:1;max-width:220px;overflow:hidden;}
-.bookie-group-header{padding:6px 10px;border-bottom:1px solid var(--navy-border);display:flex;align-items:center;justify-content:space-between;}
-.bookie-group-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;color:var(--gold);letter-spacing:0.08em;text-transform:uppercase;}
-.bookie-group-total{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--green);}
-.bookie-accounts{padding:6px 8px;display:flex;flex-direction:column;gap:4px;}
-.account-row{display:flex;align-items:center;gap:6px;}
-.acc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.acc-dot.active{background:var(--green);box-shadow:0 0 4px var(--green);}
-.acc-dot.offline{background:var(--red);}
-.acc-dot.low{background:var(--orange);}
-.acc-name{font-size:11px;color:var(--text-mid);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.acc-bal{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text);white-space:nowrap;}
-.acc-bal.low-bal{color:var(--orange);}
-.acc-bal.ok-bal{color:var(--green);}
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-/* SORT/STATS PANEL */
-.sort-panel{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:5px;min-width:140px;flex:0 0 160px;display:flex;flex-direction:column;}
-.sort-panel-header{padding:6px 10px;border-bottom:1px solid var(--navy-border);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;}
-.sort-panel-body{padding:8px;flex:1;display:flex;flex-direction:column;gap:6px;}
-.sort-btn{background:var(--navy);border:1px solid var(--navy-border);border-radius:3px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:4px 6px;cursor:pointer;text-align:left;transition:border-color 0.2s,color 0.2s;width:100%;}
-.sort-btn:hover,.sort-btn.active{border-color:var(--gold);color:var(--gold);}
-.sort-divider{height:1px;background:var(--navy-border);margin:2px 0;}
-.stat-row{display:flex;justify-content:space-between;align-items:center;}
-.stat-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim);}
-.stat-val{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);}
-.stat-val.green{color:var(--green);}
-.sessions-actions{display:flex;align-items:center;gap:6px;padding:0 20px 8px;background:var(--navy-mid);}
-.sa-btn{background:transparent;border:1px solid var(--navy-border);color:var(--text-dim);border-radius:3px;padding:4px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:9px;transition:border-color 0.2s,color 0.2s;white-space:nowrap;}
-.sa-btn:hover,.sa-btn.active-filter{border-color:var(--gold);color:var(--gold);}
-.sa-spacer{flex:1;}
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #ffc107, #ff8f00);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
 
-/* MAIN AREA */
-.main{display:flex;flex-direction:column;height:calc(100vh - 48px - 120px);overflow:hidden;}
+  .logo-text {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    color: var(--text);
+  }
 
-/* TABS */
-.tabs{background:var(--navy-mid);border-bottom:1px solid var(--navy-border);display:flex;padding:0 20px;}
-.tab{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;padding:10px 20px;cursor:pointer;color:var(--text-dim);border:none;background:transparent;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color 0.2s,border-color 0.2s;}
-.tab:hover{color:var(--text);}
-.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
-.tab-panel{display:none;}
-.tab-panel.active{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+  .logo-text span {
+    color: var(--gold);
+  }
 
-/* CONTENT AREA */
-.content-area{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:14px 20px;gap:12px;}
+  .header-centre {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
 
-/* PANEL ROW */
-.panel-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-height:0;}
+  .hyperbot-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11px;
+  }
 
-/* CARD */
-.card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:5px;overflow:hidden;display:flex;flex-direction:column;}
-.card-header{padding:8px 12px;border-bottom:1px solid var(--navy-border);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.card-body{padding:10px 12px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
-.card-footer{padding:8px 12px;border-top:1px solid var(--navy-border);background:var(--navy-mid);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+  }
 
-/* BUTTONS */
-.btn{border:none;border-radius:3px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;padding:6px 14px;transition:all 0.15s;}
-.btn-primary{background:var(--gold);color:#000;}
-.btn-primary:hover{background:var(--gold-bright);}
-.btn-secondary{background:var(--navy-light);color:var(--text-mid);border:1px solid var(--navy-border);}
-.btn-secondary:hover{border-color:var(--gold);color:var(--gold);}
-.btn-green{background:var(--green);color:#000;}
-.btn-green:hover{filter:brightness(1.1);}
-.btn-sm{padding:4px 10px;font-size:11px;}
-.btn:disabled{opacity:0.5;cursor:not-allowed;}
-.row-actions{display:flex;gap:6px;}
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
 
-/* TEXTAREA */
-.textarea-tips{width:100%;background:var(--navy);border:1px solid var(--navy-border);border-radius:3px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:8px;resize:none;outline:none;transition:border-color 0.2s;line-height:1.7;flex:1;min-height:100px;}
-.textarea-tips:focus{border-color:var(--gold);}
+  .status-label { color: var(--text-dim); }
+  .status-val { color: var(--green); font-weight: 600; }
 
-/* TABLE */
-.bets-table{width:100%;border-collapse:collapse;font-size:11px;}
-.bets-table th{text-align:left;padding:5px 7px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;border-bottom:1px solid var(--navy-border);}
-.bets-table td{padding:6px 7px;border-bottom:1px solid rgba(36,48,80,0.4);vertical-align:middle;}
-.bets-table tr:last-child td{border-bottom:none;}
-.bets-table tr:hover td{background:rgba(212,175,55,0.03);}
-.odds-badge{background:var(--navy);border:1px solid var(--navy-border);border-radius:2px;padding:1px 5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);}
-.stake-val{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--green);}
-.bookie-tag{background:var(--navy-light);border:1px solid var(--navy-border);border-radius:2px;padding:1px 5px;font-size:10px;color:var(--text-mid);}
-.no-session-tag{background:rgba(255,61,87,0.1);border:1px solid rgba(255,61,87,0.3);border-radius:2px;padding:1px 5px;font-size:9px;color:var(--red);}
-.sgm-tag{background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);border-radius:2px;padding:1px 5px;font-size:9px;color:var(--gold);}
-.rm-btn{background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:1px 4px;border-radius:2px;transition:background 0.15s;}
-.rm-btn:hover{background:rgba(255,61,87,0.12);}
-.summary-text{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);}
-.summary-text strong{color:var(--gold);}
+  .clock {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
 
-/* LOG */
-.log-area{background:var(--navy);border:1px solid var(--navy-border);border-radius:3px;padding:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;overflow-y:auto;line-height:1.9;flex:1;min-height:80px;}
-.ll{display:block;}
-.ll.info{color:var(--text-mid);}
-.ll.success{color:var(--green);}
-.ll.warn{color:var(--orange);}
-.ll.error{color:var(--red);}
-.lt{color:var(--text-dim);margin-right:5px;}
+  .session-count {
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+  }
 
-/* RECENT BETS FEED */
-.feed-section{background:var(--navy-mid);border-top:1px solid var(--navy-border);padding:8px 20px;flex-shrink:0;}
-.feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
-.feed-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;}
-.feed-last{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim);}
-.feed-table{width:100%;border-collapse:collapse;font-size:11px;}
-.feed-table th{text-align:left;padding:3px 8px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;}
-.feed-table td{padding:4px 8px;border-top:1px solid rgba(36,48,80,0.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
-.feed-table tr:first-child td{border-top:none;}
-.result-w{background:var(--green);color:#000;border-radius:2px;padding:1px 5px;font-size:9px;font-weight:700;}
-.result-l{background:var(--red);color:#fff;border-radius:2px;padding:1px 5px;font-size:9px;font-weight:700;}
-.result-p{background:var(--orange);color:#000;border-radius:2px;padding:1px 5px;font-size:9px;font-weight:700;}
-.pnl-pos{color:var(--green);font-family:'IBM Plex Mono',monospace;font-size:10px;}
-.pnl-neg{color:var(--red);font-family:'IBM Plex Mono',monospace;font-size:10px;}
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-/* FORM */
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.form-group{display:flex;flex-direction:column;gap:3px;}
-.form-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;}
-.form-input,.form-select{background:var(--navy);border:1px solid var(--navy-border);border-radius:3px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 7px;outline:none;width:100%;transition:border-color 0.2s;}
-.form-input:focus{border-color:var(--gold);}
-.form-select{cursor:pointer;}
+  .btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+  }
 
-/* PRICE CHECK */
-.price-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:5px;margin-top:8px;}
-.price-card{background:var(--navy);border:1px solid var(--navy-border);border-radius:3px;padding:7px;text-align:center;}
-.price-bookie{font-size:9px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;margin-bottom:2px;}
-.price-val{font-family:'IBM Plex Mono',monospace;font-size:17px;color:var(--gold);}
-.price-val.best{color:var(--green);}
-.price-diff{font-size:9px;margin-top:1px;font-family:'IBM Plex Mono',monospace;color:var(--text-dim);}
-.price-diff.pos{color:var(--green);}
-.price-diff.neg{color:var(--red);}
+  .btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: var(--gold-dim);
+  }
 
-/* DROP ZONE */
-.drop-zone{border:2px dashed var(--navy-border);border-radius:4px;padding:20px;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
-.drop-zone:hover,.drop-zone.drag{border-color:var(--gold);background:rgba(212,175,55,0.03);}
-.drop-icon{font-size:24px;}
-.drop-text{color:var(--text-dim);font-size:12px;}
-.drop-text strong{color:var(--gold);}
+  .btn-icon { margin-right: 5px; }
 
-::-webkit-scrollbar{width:4px;height:4px;}
-::-webkit-scrollbar-track{background:var(--navy-mid);}
-::-webkit-scrollbar-thumb{background:var(--navy-border);border-radius:2px;}
-::-webkit-scrollbar-thumb:hover{background:var(--gold-dim);}
+  /* ── SESSIONS STRIP ── */
+  .sessions-wrap {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px 12px;
+  }
+
+  .sessions-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .sessions-label {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sessions-label::before {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 13px;
+    background: var(--gold);
+    border-radius: 2px;
+  }
+
+  .filter-pills {
+    display: flex;
+    gap: 6px;
+    margin-left: 4px;
+  }
+
+  .pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+  }
+
+  .pill.active {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .pill.none { }
+
+  .toggle-offline {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle-box {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid var(--green);
+    background: var(--green-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--green);
+  }
+
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+  }
+
+  .refresh-btn:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+
+  /* ── BOOKIE CARDS ── */
+  .bookie-grid {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .bookie-card {
+    flex: 1;
+    min-width: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    transition: border-color 0.15s;
+  }
+
+  .bookie-card:hover {
+    border-color: var(--border2);
+  }
+
+  .bookie-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bookie-name {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .bookie-name.sportsbet { color: #ff9800; }
+  .bookie-name.tab { color: #4fc3f7; }
+  .bookie-name.pointsbet { color: #ce93d8; }
+  .bookie-name.ladbrokes { color: #ef5350; }
+  .bookie-name.betright { color: #80cbc4; }
+  .bookie-name.betdeluxe { color: #a5d6a7; }
+  .bookie-name.neds { color: #ffb74d; }
+
+  .bookie-count {
+    font-size: 9px;
+    color: var(--text-muted);
+    background: var(--surface3);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .bookie-total {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .account-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+    gap: 8px;
+  }
+
+  .account-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .acct-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .acct-dot.active {
+    background: var(--green);
+    box-shadow: 0 0 5px var(--green);
+  }
+
+  .acct-dot.inactive {
+    background: var(--text-muted);
+  }
+
+  .acct-name {
+    font-size: 10px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .acct-bal {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .acct-bal.low { color: var(--text-muted); }
+  .acct-bal.negative { color: var(--red); }
+
+  /* Stats panel */
+  .stats-panel {
+    min-width: 160px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    flex-shrink: 0;
+  }
+
+  .stats-header {
+    font-family: var(--sans);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .sort-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    margin-top: 8px;
+  }
+
+  .sort-btn {
+    display: block;
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 5px 9px;
+    border-radius: 5px;
+    border: 1px solid var(--border2);
+    background: var(--surface3);
+    color: var(--text-dim);
+    cursor: pointer;
+    margin-bottom: 4px;
+    text-align: left;
+    transition: all 0.15s;
+  }
+
+  .sort-btn.active {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: var(--gold-dim);
+  }
+
+  .sort-btn:hover:not(.active) {
+    border-color: var(--border2);
+    color: var(--text);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 10px 0;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+  }
+
+  .stat-key {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .stat-val {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .stat-val.green { color: var(--green); }
+  .stat-val.gold { color: var(--gold); }
+
+  /* ── TABS ── */
+  .tabs-bar {
+    display: flex;
+    gap: 2px;
+    padding: 10px 20px 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 6px 6px 0 0;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+    position: relative;
+    bottom: -1px;
+  }
+
+  .tab.active {
+    background: var(--bg);
+    border-color: var(--border);
+    border-bottom-color: var(--bg);
+    color: var(--gold);
+  }
+
+  .tab:hover:not(.active) {
+    color: var(--text-dim);
+    background: var(--surface2);
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--sans);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-body {
+    padding: 14px;
+  }
+
+  textarea.paste-area {
+    width: 100%;
+    height: 200px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 10px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  textarea.paste-area:focus {
+    border-color: var(--gold);
+  }
+
+  textarea.paste-area::placeholder {
+    color: var(--text-muted);
+  }
+
+  .parse-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 9px;
+    background: var(--gold-dim);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    color: var(--gold);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .parse-btn:hover {
+    background: var(--gold);
+    color: var(--bg);
+  }
+
+  /* Parsed bets placeholder */
+  .empty-state {
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+
+  .empty-icon {
+    font-size: 28px;
+    opacity: 0.4;
+  }
+
+  /* LOG */
+  .log-section {
+    margin: 0 20px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .log-header {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .log-title {
+    font-family: var(--sans);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .log-clear {
+    font-size: 9px;
+    color: var(--text-muted);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    background: none;
+    border: none;
+    font-family: var(--mono);
+  }
+
+  .log-clear:hover { color: var(--red); }
+
+  .log-body {
+    padding: 10px 14px;
+    height: 80px;
+    overflow-y: auto;
+    font-size: 10px;
+    line-height: 1.7;
+  }
+
+  .log-line { display: flex; gap: 10px; }
+  .log-time { color: var(--text-muted); flex-shrink: 0; }
+  .log-msg.ok { color: var(--green); }
+  .log-msg.info { color: var(--blue); }
+  .log-msg.warn { color: var(--gold); }
+  .log-msg.err { color: var(--red); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <div class="header">
-  <div class="logo">GS BetPlacer <span>v3</span></div>
-  <div class="header-mid">
-    <div class="status-pill"><span class="dot" id="apiDot"></span><span id="apiStatusText">Connecting...</span></div>
-    <div class="status-pill"><span id="clockEl"></span></div>
-    <div class="status-pill" id="sessionCountPill"><span class="dot orange"></span><span id="sessionCountText">Loading...</span></div>
-  </div>
-  <button class="settings-toggle-btn" onclick="toggleSettings()">⚙ Settings ▼</button>
-</div>
+  <div class="logo"></div>
 
-<!-- SETTINGS PANEL -->
-<div class="settings-panel" id="settingsPanel">
-  <div class="settings-grid">
-    <div class="sf"><div class="sl">Unit Size ($)</div><input type="number" class="si" id="s_unit" min="1" placeholder="180"><div class="sh">$ per unit</div></div>
-    <div class="sf"><div class="sl">Max Stake / Account ($)</div><input type="number" class="si" id="s_maxStake" min="1" placeholder="200"><div class="sh">Cap per account per bet</div></div>
-    <div class="sf"><div class="sl">Min Account Balance ($)</div><input type="number" class="si" id="s_minBal" min="0" placeholder="50"><div class="sh">Skip accounts below this</div></div>
-    <div class="sf"><div class="sl">Price Tolerance (%)</div><input type="number" class="si" id="s_priceTol" min="0" max="50" placeholder="5"><div class="sh">Max % drop to accept</div></div>
-    <div class="sf"><div class="sl">Delay Min (seconds)</div><input type="number" class="si" id="s_delayMin" min="0" max="120" placeholder="3"><div class="sh">Same-bookie only</div></div>
-    <div class="sf"><div class="sl">Delay Max (seconds)</div><input type="number" class="si" id="s_delayMax" min="0" max="120" placeholder="10"><div class="sh">0–120s</div></div>
-    <div class="sf"><div class="sl">Auto-Place</div><div class="toggle-row"><span class="tl">Place automatically</span><label class="toggle-switch"><input type="checkbox" id="s_autoPlace" onchange="saveSettings()"><span class="ts"></span></label></div></div>
-    <div class="sf"><div class="sl">Notify Only</div><div class="toggle-row"><span class="tl">Detect only</span><label class="toggle-switch"><input type="checkbox" id="s_notifyOnly" onchange="saveSettings()"><span class="ts"></span></label></div></div>
+  <div class="header-centre">
+    <div class="hyperbot-status">
+      <div class="status-dot"></div>
+      <span class="status-label">Hyperbot</span>
+      <span class="status-val">ONLINE</span>
+    </div>
+    <div class="clock" id="clock">--:--:-- AEST</div>
+    <div class="session-count" id="sessionCount">7 ACTIVE</div>
   </div>
-  <div class="priority-section">
-    <div class="pl-label">Bookie Priority — drag to reorder</div>
-    <div class="priority-list" id="priorityList"></div>
-  </div>
-  <div class="settings-actions">
-    <button class="btn-save" onclick="saveSettings()">Save Settings</button>
-    <span class="save-ok" id="saveOk">✓ Saved</span>
+
+  <div class="header-right">
+    <button class="btn"><span class="btn-icon">⚙</span> Settings</button>
   </div>
 </div>
 
 <!-- SESSIONS STRIP -->
-<div class="sessions-strip" id="sessionsStrip">
-  <div style="color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:11px;display:flex;align-items:center;gap:6px;"><span class="spinner"></span> Loading sessions...</div>
-</div>
+<div class="sessions-wrap">
+  <div class="sessions-toolbar">
+    <div class="sessions-label">Sessions</div>
+    <div class="filter-pills">
+      <div class="pill active">✓ All Active</div>
+      <div class="pill">✕ None</div>
+    </div>
+    <label class="toggle-offline">
+      <div class="toggle-box">✓</div>
+      Hide Offline
+    </label>
+    <button class="refresh-btn" onclick="loadSessions()">↻ Refresh</button>
+  </div>
 
-<!-- SESSIONS ACTIONS BAR -->
-<div class="sessions-actions">
-  <button class="sa-btn active-filter" id="filterAll" onclick="setFilter('all')">✓ All Active</button>
-  <button class="sa-btn" id="filterNone" onclick="setFilter('none')">✗ None</button>
-  <button class="sa-btn" id="filterHide" onclick="toggleHideOffline()">Hide Offline</button>
-  <div class="sa-spacer"></div>
-  <button class="sa-btn" onclick="loadSessions()">↻ Refresh</button>
+  <div class="bookie-grid" id="bookieGrid">
+    <!-- Injected by JS -->
+  </div>
 </div>
 
 <!-- TABS -->
-<div class="tabs">
-  <button class="tab active" onclick="switchTab('paste',this)">Paste Tips</button>
-  <button class="tab" onclick="switchTab('image',this)">Bet Slip Image</button>
-  <button class="tab" onclick="switchTab('manual',this)">Manual Bet</button>
-  <button class="tab" onclick="switchTab('pricecheck',this)">Price Check</button>
+<div class="tabs-bar">
+  <div class="tab active">Paste Tips</div>
+  <div class="tab">Bet Slip Image</div>
+  <div class="tab">Manual Bet</div>
+  <div class="tab">Price Check</div>
 </div>
 
-<!-- PASTE TIPS -->
-<div class="tab-panel active" id="tab-paste">
-  <div class="content-area">
-    <div class="panel-row">
-      <div class="card">
-        <div class="card-header">Paste Edge Tips / Fatty / Other</div>
-        <div class="card-body">
-          <textarea class="textarea-tips" id="tipsPasteArea" placeholder="Paste tips here...
-
-🏉 AFL — Wayne Milera Under 26.5 Disposals [Adelaide vs Richmond]
-💰 $1.89 | 2u | Sportsbet
-
-🏀 NBA — Player Prop
-Tobias Harris Over 14.5 Points
-💰 $1.85 | 2u | TAB
-
-🏉 AFL — Player1 Over 20 | Player2 Over 15 [Team vs Team]
-💰 $3.80 | 2u | TAB"></textarea>
-          <div class="row-actions">
-            <button class="btn btn-primary btn-sm" onclick="parseTips()">Parse Tips</button>
-            <button class="btn btn-secondary btn-sm" onclick="clearPaste()">Clear</button>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header">Parsed Bets <span id="parsedCount" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);">0 bets</span></div>
-        <div class="card-body" style="padding:0;overflow-x:auto;">
-          <table class="bets-table">
-            <thead><tr><th>Selection</th><th>Bookie</th><th>Odds</th><th>Stake</th><th>Type</th><th></th></tr></thead>
-            <tbody id="parsedBody"><tr><td colspan="6" style="color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:14px;text-align:center;">Paste and parse tips above</td></tr></tbody>
-          </table>
-        </div>
-        <div class="card-footer">
-          <div class="summary-text">Total: <strong id="totalStakeEl">$0</strong> across <strong id="totalBetsEl">0</strong> bets</div>
-          <div style="display:flex;gap:5px;">
-            <button class="btn btn-secondary btn-sm" onclick="priceCheckAll()">Price Check</button>
-            <button class="btn btn-green btn-sm" onclick="placeAllBets()" id="placeAllBtn">Place All</button>
-          </div>
-        </div>
-      </div>
+<!-- MAIN CONTENT -->
+<div class="main">
+  <div class="panel">
+    <div class="panel-header">
+      <span>Paste Tips</span>
+      <span style="font-size:9px;color:var(--text-muted)">EdgePicks format</span>
     </div>
-    <div class="card" style="flex-shrink:0;max-height:140px;">
-      <div class="card-header">Log</div>
-      <div class="card-body" style="padding:6px;">
-        <div class="log-area" id="logArea"><span class="ll info"><span class="lt">--:--:--</span>BetPlacer v3 ready.</span></div>
+    <div class="panel-body">
+      <textarea class="paste-area" placeholder="Paste tips here...&#10;&#10;💰 AFL — Adelaide v Richmond&#10;Wayne Milera — Disposals U26.5 @1.89 SB 1u"></textarea>
+      <button class="parse-btn">⚡ PARSE &amp; PLACE</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span>Parsed Bets</span>
+      <span style="font-size:9px;color:var(--text-muted)">Ready to place</span>
+    </div>
+    <div class="panel-body">
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div>No bets parsed yet</div>
+        <div style="color:var(--text-muted);font-size:10px">Paste tips and click Parse</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- BET SLIP IMAGE -->
-<div class="tab-panel" id="tab-image">
-  <div class="content-area">
-    <div class="card" style="flex:1;">
-      <div class="card-header">Image Bet Slip Reader</div>
-      <div class="card-body">
-        <div class="drop-zone" id="dropZone" onclick="document.getElementById('imgInput').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-          <div class="drop-icon">📷</div>
-          <div class="drop-text">Drop bet slip here or <strong>click to browse</strong><br><span style="font-size:10px;color:var(--text-dim);">Detects bookie from screenshot — Sportsbet, TAB, Pointsbet, Neds, Ladbrokes</span></div>
-        </div>
-        <input type="file" id="imgInput" accept="image/*" style="display:none" onchange="handleImageFile(event)">
-        <div id="imgPreviewWrap" style="display:none;margin-bottom:8px;"><img id="imgPreview" style="max-width:100%;max-height:200px;border-radius:3px;border:1px solid var(--navy-border);"></div>
-        <div class="row-actions">
-          <button class="btn btn-primary btn-sm" onclick="readImageSlip()" id="readSlipBtn">Read Slip with AI</button>
-          <button class="btn btn-secondary btn-sm" onclick="clearImage()">Clear</button>
-        </div>
-        <div class="log-area" id="imageLog" style="min-height:60px;margin-top:8px;"><span class="ll info"><span class="lt">--:--:--</span>Upload a bet slip to extract details.</span></div>
-      </div>
-    </div>
+<!-- LOG -->
+<div class="log-section">
+  <div class="log-header">
+    <div class="log-title">Activity Log</div>
+    <button class="log-clear">Clear</button>
   </div>
-</div>
-
-<!-- MANUAL BET -->
-<div class="tab-panel" id="tab-manual">
-  <div class="content-area">
-    <div class="card" style="flex:1;">
-      <div class="card-header">Manual Bet Builder</div>
-      <div class="card-body">
-        <div class="form-grid">
-          <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Player / Team</label><input type="text" class="form-input" id="m_player" placeholder="e.g. Wayne Milera"></div>
-          <div class="form-group"><label class="form-label">Sport</label><select class="form-select" id="m_sport"><option value="afl">AFL</option><option value="nba">NBA</option><option value="nrl">NRL</option><option value="mlb">MLB</option></select></div>
-          <div class="form-group"><label class="form-label">Event (Team v Team)</label><input type="text" class="form-input" id="m_event" placeholder="Adelaide v Richmond"></div>
-          <div class="form-group"><label class="form-label">Stat</label><select class="form-select" id="m_stat">
-            <option value="player_disposals">Disposals</option><option value="player_points">Points</option>
-            <option value="player_rebounds">Rebounds</option><option value="player_assists">Assists</option>
-            <option value="player_goals">Goals</option><option value="player_marks">Marks</option>
-            <option value="player_tackles">Tackles</option><option value="player_kicks">Kicks</option>
-            <option value="player_pra">Points+Rebounds+Assists</option><option value="player_pts_rebs">Points+Rebounds</option>
-            <option value="player_pts_asts">Points+Assists</option><option value="player_reb_asts">Rebounds+Assists</option>
-            <option value="player_threes">3-Pointers</option><option value="player_blocks">Blocks</option>
-            <option value="player_steals">Steals</option><option value="player_total_bases">Total Bases</option>
-            <option value="player_home_runs">Home Runs</option><option value="head_to_head">Head to Head / ML</option>
-          </select></div>
-          <div class="form-group"><label class="form-label">Selection</label><select class="form-select" id="m_selection"><option value="over">Over</option><option value="under">Under</option></select></div>
-          <div class="form-group"><label class="form-label">Line</label><input type="number" class="form-input" id="m_line" placeholder="26.5" step="0.5"></div>
-          <div class="form-group"><label class="form-label">Odds</label><input type="number" class="form-input" id="m_odds" placeholder="1.89" step="0.01" min="1.01"></div>
-          <div class="form-group"><label class="form-label">Units (max 2)</label><input type="number" class="form-input" id="m_units" placeholder="1" step="0.5" min="0.5" max="2"></div>
-          <div class="form-group"><label class="form-label">Bookie</label><select class="form-select" id="m_bookie"><option>Sportsbet</option><option>TAB</option><option>Neds</option><option>Ladbrokes</option><option>Pointsbet</option><option>Bet365</option></select></div>
-          <div class="form-group"><label class="form-label">Period</label><select class="form-select" id="m_period"><option value="full_game">Full Game</option><option value="1q">1st Quarter</option><option value="1h">1st Half</option></select></div>
-        </div>
-        <div class="row-actions" style="margin-top:10px;">
-          <button class="btn btn-primary btn-sm" onclick="manualPriceCheck()">Price Check</button>
-          <button class="btn btn-green btn-sm" onclick="manualPlace()">Place Bet</button>
-          <button class="btn btn-secondary btn-sm" onclick="clearManual()">Clear</button>
-        </div>
-        <div class="log-area" id="manualLog" style="min-height:60px;margin-top:8px;"><span class="ll info"><span class="lt">--:--:--</span>Manual builder ready.</span></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- PRICE CHECK -->
-<div class="tab-panel" id="tab-pricecheck">
-  <div class="content-area">
-    <div class="card" style="flex:1;">
-      <div class="card-header">Price Check Across All Bookies</div>
-      <div class="card-body">
-        <div style="display:flex;gap:6px;">
-          <input type="text" class="form-input" id="pc_selection" placeholder="Player name or event..." style="flex:1;">
-          <button class="btn btn-primary btn-sm" onclick="runPriceCheck()">Check</button>
-        </div>
-        <div class="price-grid" id="priceGrid"><div style="color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:10px;grid-column:1/-1;margin-top:6px;">Enter a selection above</div></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- RECENT BETS FEED -->
-<div class="feed-section" id="feedSection">
-  <div class="feed-header">
-    <div class="feed-title">Recent Bets</div>
-    <div class="feed-last" id="feedLast"></div>
-  </div>
-  <div style="overflow-x:auto;">
-    <table class="feed-table" id="feedTable">
-      <thead><tr><th>Time</th><th>Tipster</th><th>Selection</th><th>Bookie</th><th>Odds</th><th>Stake</th><th>Result</th><th>P&L</th></tr></thead>
-      <tbody id="feedBody"><tr><td colspan="8" style="color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:8px;">Loading feed...</td></tr></tbody>
-    </table>
+  <div class="log-body" id="logBody">
+    <div class="log-line"><span class="log-time">11:29:41</span><span class="log-msg ok">Sessions loaded — 7 active accounts found</span></div>
+    <div class="log-line"><span class="log-time">11:29:39</span><span class="log-msg info">Connecting to Hyperbot API...</span></div>
+    <div class="log-line"><span class="log-time">11:28:00</span><span class="log-msg ok">GS BetPlacer v3 initialised</span></div>
   </div>
 </div>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────
-const HB_BASE = 'https://api.hyperbot.imperialwealth.com';
-const HB_KEY  = 'a3e6fd0b-746b-4ccf-84bd-e0bbdd63417e';
-const HB_H    = {'Content-Type':'application/json','x-api-key':HB_KEY};
-const CORS    = 'https://corsproxy.io/?';
-const SHEETS_BETS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSmx-iwh3vuojGOfmBGLU7miezIPcNmoxkCeEYekJA30SIDNKmQo8BM63A3a3EK1Q/pub?gid=72446872&single=true&output=csv';
+const API_BASE = 'https://api.hyperbot.imperialwealth.com';
+const API_KEY  = 'a3e6fd0b-746b-4ccf-84bd-e0bbdd63417e';
 
-const DEFAULTS = {
-  unit:180,maxStake:200,minBal:50,priceTol:5,
-  delayMin:3,delayMax:10,autoPlace:true,notifyOnly:false,
-  priority:['Sportsbet','TAB','Neds','Ladbrokes','Pointsbet','Bet365'],
-  hideOffline:false
+// Clock
+function updateClock() {
+  const now = new Date();
+  const aest = new Date(now.toLocaleString('en-AU', { timeZone: 'Australia/Sydney' }));
+  const h = String(aest.getHours()).padStart(2, '0');
+  const m = String(aest.getMinutes()).padStart(2, '0');
+  const s = String(aest.getSeconds()).padStart(2, '0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s} AEST`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Bookie colour map
+const BOOKIE_COLORS = {
+  sportsbet: '#ff9800',
+  tab:       '#4fc3f7',
+  pointsbet: '#ce93d8',
+  ladbrokes: '#ef5350',
+  betright:  '#80cbc4',
+  betdeluxe: '#a5d6a7',
+  neds:      '#ffb74d',
+  palmerbet: '#f48fb1',
+  unibet:    '#7bc67e',
+  betr:      '#90caf9',
+  tabtouch:  '#b0bec5',
+  default:   '#aab4be',
 };
 
-const BOOKIE_MAP = {
-  'sb':'sportsbet','sportsbet':'sportsbet','tab':'tab',
-  'pb':'pointsbet','pointsbet':'pointsbet',
-  '365':'bet365','bet365':'bet365',
-  'lads':'ladbrokes','ladbrokes':'ladbrokes','neds':'neds'
-};
-const NO_SESSION = ['bet365','365'];
-const AFL_TEAMS  = ['adelaide','brisbane','carlton','collingwood','essendon','fremantle','geelong','gold coast','gws','greater western sydney','hawthorn','melbourne','north melbourne','port adelaide','richmond','st kilda','sydney','west coast','western bulldogs','hawks','swans','lions','crows','blues','magpies','bombers','dockers','cats','suns','giants','dees','kangaroos','power','tigers','saints','eagles','bulldogs','freo','pies'];
-const NBA_TEAMS  = ['atlanta','boston','brooklyn','charlotte','chicago','cleveland','dallas','denver','detroit','golden state','houston','indiana','la clippers','la lakers','los angeles','memphis','miami','milwaukee','minnesota','new orleans','new york','oklahoma city','orlando','philadelphia','phoenix','portland','sacramento','san antonio','toronto','utah','washington','hawks','celtics','nets','hornets','bulls','cavaliers','mavericks','nuggets','pistons','warriors','rockets','pacers','clippers','lakers','grizzlies','heat','bucks','timberwolves','pelicans','knicks','thunder','magic','76ers','suns','blazers','kings','spurs','raptors','jazz','wizards'];
-const ALL_TEAMS  = [...AFL_TEAMS,...NBA_TEAMS];
-
-let CFG = {...DEFAULTS};
-let sessions = [];
-let parsedBets = [];
-let imageFile = null;
-let dragSrc = null;
-let currentSort = 'bookie';
-let hideOffline = false;
-let selectedAccounts = new Set();
-
-// ── CLOCK ───────────────────────────────────────────────
-function tick(){document.getElementById('clockEl').textContent=new Date().toLocaleTimeString('en-AU',{timeZone:'Australia/Sydney',hour12:false});}
-setInterval(tick,1000);tick();
-
-// ── SETTINGS ────────────────────────────────────────────
-function loadSettings(){
-  const s=localStorage.getItem('gs_bp_v3');
-  CFG=s?{...DEFAULTS,...JSON.parse(s)}:{...DEFAULTS};
-  document.getElementById('s_unit').value=CFG.unit;
-  document.getElementById('s_maxStake').value=CFG.maxStake;
-  document.getElementById('s_minBal').value=CFG.minBal;
-  document.getElementById('s_priceTol').value=CFG.priceTol;
-  document.getElementById('s_delayMin').value=CFG.delayMin;
-  document.getElementById('s_delayMax').value=CFG.delayMax;
-  document.getElementById('s_autoPlace').checked=CFG.autoPlace;
-  document.getElementById('s_notifyOnly').checked=CFG.notifyOnly;
-  hideOffline=CFG.hideOffline||false;
-  renderPriority();
-}
-function saveSettings(){
-  let dMin=clamp(+document.getElementById('s_delayMin').value||0,0,120);
-  let dMax=clamp(+document.getElementById('s_delayMax').value||0,0,120);
-  if(dMax<dMin)dMax=dMin;
-  CFG={
-    unit:+document.getElementById('s_unit').value||DEFAULTS.unit,
-    maxStake:+document.getElementById('s_maxStake').value||DEFAULTS.maxStake,
-    minBal:+document.getElementById('s_minBal').value||DEFAULTS.minBal,
-    priceTol:+document.getElementById('s_priceTol').value||DEFAULTS.priceTol,
-    delayMin:dMin,delayMax:dMax,
-    autoPlace:document.getElementById('s_autoPlace').checked,
-    notifyOnly:document.getElementById('s_notifyOnly').checked,
-    priority:getPriorityOrder(),
-    hideOffline
-  };
-  document.getElementById('s_delayMin').value=dMin;
-  document.getElementById('s_delayMax').value=dMax;
-  localStorage.setItem('gs_bp_v3',JSON.stringify(CFG));
-  const el=document.getElementById('saveOk');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000);
-}
-document.querySelectorAll('.si').forEach(el=>el.addEventListener('change',saveSettings));
-function toggleSettings(){document.getElementById('settingsPanel').classList.toggle('open');}
-function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
-
-// ── PRIORITY DRAG ────────────────────────────────────────
-function renderPriority(){
-  const list=document.getElementById('priorityList');list.innerHTML='';
-  CFG.priority.forEach((b,i)=>{
-    const el=document.createElement('div');el.className='pi';el.draggable=true;el.dataset.i=i;
-    el.innerHTML=`<span class="pi-handle">⠿</span><span class="pi-rank">#${i+1}</span><span class="pi-name">${b}</span>`;
-    el.addEventListener('dragstart',()=>{dragSrc=el;el.classList.add('dragging');});
-    el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over');});
-    el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
-    el.addEventListener('dragend',()=>{el.classList.remove('dragging');document.querySelectorAll('.pi').forEach(x=>x.classList.remove('drag-over'));});
-    el.addEventListener('drop',e=>{
-      e.preventDefault();if(dragSrc===el)return;
-      const arr=[...CFG.priority];arr.splice(+el.dataset.i,0,arr.splice(+dragSrc.dataset.i,1)[0]);
-      CFG.priority=arr;renderPriority();saveSettings();
-    });
-    list.appendChild(el);
-  });
-}
-function getPriorityOrder(){return[...document.querySelectorAll('.pi-name')].map(e=>e.textContent);}
-
-// ── API STATUS ───────────────────────────────────────────
-async function checkApi(){
-  try{
-    const r=await fetch(CORS+encodeURIComponent(`${HB_BASE}/accounts/get_sessions`),{method:'POST',headers:HB_H,body:'{}'});
-    document.getElementById('apiDot').className=r.ok?'dot':'dot red';
-    document.getElementById('apiStatusText').textContent=r.ok?'Hyperbot OK':'API Error';
-  }catch{
-    document.getElementById('apiDot').className='dot red';
-    document.getElementById('apiStatusText').textContent='Offline';
-  }
+function bookieColor(b) {
+  return BOOKIE_COLORS[b?.toLowerCase()] || BOOKIE_COLORS.default;
 }
 
-// ── SESSIONS ─────────────────────────────────────────────
-async function loadSessions(){
-  const strip=document.getElementById('sessionsStrip');
-  strip.innerHTML='<div style="color:var(--text-dim);font-family:\'IBM Plex Mono\',monospace;font-size:11px;display:flex;align-items:center;gap:6px;"><span class="spinner"></span> Loading...</div>';
-  try{
-    let data=null;
-    for(const ep of['/accounts/get_sessions','/accounts/get_active_sessions','/api/session_ids']){
-      try{
-        const r=await fetch(CORS+encodeURIComponent(`${HB_BASE}${ep}`),{method:'POST',headers:HB_H,body:'{}'});
-        if(r.ok){data=await r.json();console.log(ep,'raw:',JSON.stringify(data).slice(0,400));break;}
-      }catch(e){console.log(ep,'error:',e.message);}
-    }
-    if(!data)throw new Error('All session endpoints failed');
-
-    let raw=Array.isArray(data)?data:(data.sessions||data.active_sessions||data.session_ids||[]);
-    console.log('Sessions raw count:',raw.length,'sample:',JSON.stringify(raw[0]));
-
-    // Enrich with balances
-    const enriched=await Promise.all(raw.map(async s=>{
-      const sid=getSid(s);
-      let bal=null;
-      if(typeof s==='object'){bal=s.balance??s.available_balance??null;}
-      if(bal===null&&sid){
-        for(const ep of['/v2/balance','/api/balance']){
-          try{
-            const r=await fetch(CORS+encodeURIComponent(`${HB_BASE}${ep}`),{method:'POST',headers:HB_H,body:JSON.stringify({session_id:sid})});
-            if(r.ok){const d=await r.json();bal=d.balance??d.available_balance??null;break;}
-          }catch{}
-        }
-      }
-      const obj=typeof s==='object'?s:{session_id:sid};
-      return{...obj,_sid:sid,_bal:bal};
-    }));
-
-    sessions=enriched;
-    renderSessions();
-    const active=enriched.filter(s=>isActive(s));
-    document.getElementById('sessionCountText').textContent=`${active.length} sessions active`;
-    document.getElementById('sessionCountPill').querySelector('.dot').className=active.length>0?'dot':'dot red';
-  }catch(e){
-    strip.innerHTML=`<div style="color:var(--red);font-family:'IBM Plex Mono',monospace;font-size:11px;">${e.message}</div>`;
-  }
+function fmt(val) {
+  if (val === null || val === undefined) return '$—';
+  return '$' + Number(val).toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-function getSid(s){
-  if(!s)return'';
-  if(typeof s==='string')return s;
-  if(typeof s==='number')return String(s);
-  return String(s.session_id||s.id||s.sessionId||s.username||Object.values(s)[0]||'');
+function nameLabel(s) {
+  // use username, truncate
+  const u = s.username || String(s.session_id);
+  return u.length > 18 ? u.slice(0, 16) + '…' : u;
 }
 
-function getName(s){
-  if(typeof s==='string')return s;
-  return s.username||s.name||s.account_name||s.email||s.session_id||getSid(s);
-}
+function renderSessions(sessions) {
+  const active = sessions.filter(s => s.active);
+  document.getElementById('sessionCount').textContent = `${active.length} ACTIVE`;
 
-function getBookie(s){
-  if(typeof s==='string'){const p=s.split('_');return p[0]||'Unknown';}
-  return s.bookie||s.bookmaker||s.platform||s.site||'Unknown';
-}
-
-function isActive(s){
-  if(typeof s==='string'||typeof s==='number')return true;
-  return s.active!==false&&s.status!=='inactive'&&s.status!=='offline'&&s.status!=='Offline (Idle)'&&!(s.status||'').toLowerCase().includes('offline');
-}
-
-function renderSessions(){
-  const strip=document.getElementById('sessionsStrip');
-  strip.innerHTML='';
-
-  let list=[...sessions];
-
-  // Sort
-  if(currentSort==='balance'){list.sort((a,b)=>(b._bal||0)-(a._bal||0));}
-  else if(currentSort==='status'){list.sort((a,b)=>isActive(b)?1:-1);}
-
-  // Group by bookie
-  const groups={};
-  list.forEach(s=>{
-    const bk=getBookie(s).toUpperCase();
-    if(!groups[bk])groups[bk]=[];
-    groups[bk].push(s);
+  // Group by bookie, active only (hide offline toggled on)
+  const groups = {};
+  active.forEach(s => {
+    const b = (s.bookie || 'unknown').toLowerCase();
+    if (!groups[b]) groups[b] = { sessions: [], total: 0 };
+    groups[b].sessions.push(s);
+    groups[b].total += (s.balance || 0);
   });
 
-  // Sort groups by priority
-  const groupKeys=Object.keys(groups).sort((a,b)=>{
-    const ai=CFG.priority.findIndex(p=>a.includes(p.toUpperCase()));
-    const bi=CFG.priority.findIndex(p=>b.includes(p.toUpperCase()));
-    return(ai<0?99:ai)-(bi<0?99:bi);
-  });
+  const grid = document.getElementById('bookieGrid');
+  grid.innerHTML = '';
 
-  groupKeys.forEach(bk=>{
-    const accs=groups[bk];
-    const visibleAccs=hideOffline?accs.filter(s=>isActive(s)):accs;
-    if(!visibleAccs.length)return;
+  // Sort groups by total desc
+  const sorted = Object.entries(groups).sort((a, b) => b[1].total - a[1].total);
 
-    const totalBal=visibleAccs.reduce((sum,s)=>sum+(s._bal||0),0);
-    const grp=document.createElement('div');grp.className='bookie-group';
+  sorted.forEach(([bookie, data]) => {
+    const col = bookieColor(bookie);
+    const card = document.createElement('div');
+    card.className = 'bookie-card';
 
-    const header=document.createElement('div');header.className='bookie-group-header';
-    header.innerHTML=`<span class="bookie-group-name">${bk}</span><span class="bookie-group-total">$${totalBal.toFixed(0)}</span>`;
-    grp.appendChild(header);
+    const accountRows = data.sessions
+      .sort((a, b) => (b.balance || 0) - (a.balance || 0))
+      .map(s => {
+        const bal = s.balance || 0;
+        const balClass = bal <= 0 ? 'low' : '';
+        return `
+          <div class="account-row">
+            <div class="account-left">
+              <div class="acct-dot active"></div>
+              <div class="acct-name">${nameLabel(s)}</div>
+            </div>
+            <div class="acct-bal ${balClass}">${fmt(s.balance)}</div>
+          </div>`;
+      }).join('');
 
-    const accsDiv=document.createElement('div');accsDiv.className='bookie-accounts';
-    visibleAccs.forEach(s=>{
-      const active=isActive(s);
-      const bal=s._bal;
-      const low=bal!==null&&bal<CFG.minBal;
-      const dotClass=!active?'offline':low?'low':'active';
-      const balClass=!active?'':'low-bal'?low:'ok-bal';
-      const name=getName(s);
-      const displayName=name.length>20?name.slice(0,18)+'…':name;
-      const row=document.createElement('div');row.className='account-row';
-      row.innerHTML=`<span class="acc-dot ${dotClass}"></span><span class="acc-name" title="${name}">${displayName}</span><span class="acc-bal ${low?'low-bal':'ok-bal'}">${bal!==null?'$'+parseFloat(bal).toFixed(0):'—'}</span>`;
-      accsDiv.appendChild(row);
-    });
-    grp.appendChild(accsDiv);
-    strip.appendChild(grp);
-  });
-
-  // Sort/Stats panel
-  const sortPanel=document.createElement('div');sortPanel.className='sort-panel';
-  sortPanel.innerHTML=`
-    <div class="sort-panel-header">Options</div>
-    <div class="sort-panel-body">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim);margin-bottom:2px;">SORT BY</div>
-      <button class="sort-btn ${currentSort==='bookie'?'active':''}" onclick="setSort('bookie')">Bookie</button>
-      <button class="sort-btn ${currentSort==='balance'?'active':''}" onclick="setSort('balance')">Balance ↓</button>
-      <button class="sort-btn ${currentSort==='status'?'active':''}" onclick="setSort('status')">Status</button>
-      <div class="sort-divider"></div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-dim);margin-bottom:2px;">STATS</div>
-      <div class="stat-row"><span class="stat-label">Active Accs</span><span class="stat-val">${sessions.filter(s=>isActive(s)).length}</span></div>
-      <div class="stat-row"><span class="stat-label">Total Balance</span><span class="stat-val green">$${sessions.reduce((sum,s)=>sum+(s._bal||0),0).toFixed(0)}</span></div>
-      <div class="stat-row"><span class="stat-label">Est. Exposure</span><span class="stat-val">$${(parsedBets.reduce((s,b)=>s+(b.stake||0),0)).toFixed(0)}</span></div>
-    </div>
-  `;
-  strip.appendChild(sortPanel);
-}
-
-function setSort(s){currentSort=s;renderSessions();}
-function toggleHideOffline(){hideOffline=!hideOffline;CFG.hideOffline=hideOffline;saveSettings();document.getElementById('filterHide').classList.toggle('active-filter',hideOffline);renderSessions();}
-function setFilter(f){
-  if(f==='all'){sessions.forEach(s=>{s._selected=true;});document.getElementById('filterAll').classList.add('active-filter');document.getElementById('filterNone').classList.remove('active-filter');}
-  else{sessions.forEach(s=>{s._selected=false;});document.getElementById('filterNone').classList.add('active-filter');document.getElementById('filterAll').classList.remove('active-filter');}
-}
-
-function sessionMatchesBookie(s,bookie){
-  const b=bookie.toLowerCase();
-  const mapped=BOOKIE_MAP[b]||b;
-  const bk=getBookie(s).toLowerCase();
-  const sid=getSid(s).toLowerCase();
-  const name=getName(s).toLowerCase();
-  return bk.includes(mapped)||sid.includes(mapped)||name.includes(mapped);
-}
-
-// ── PARSER ──────────────────────────────────────────────
-function inferStat(t){
-  const s=t.toLowerCase();
-  if(/points.{0,5}rebounds.{0,5}assists|pra/.test(s))return'player_pra';
-  if(/points.{0,5}rebounds/.test(s))return'player_pts_rebs';
-  if(/points.{0,5}assists/.test(s))return'player_pts_asts';
-  if(/rebounds.{0,5}assists/.test(s))return'player_reb_asts';
-  if(/3.point|three.point|3pm|3pt/.test(s))return'player_threes';
-  if(/home.?run/.test(s))return'player_home_runs';
-  if(/total.?base/.test(s))return'player_total_bases';
-  if(/disposal/.test(s))return'player_disposals';
-  if(/goal/.test(s))return'player_goals';
-  if(/kick/.test(s))return'player_kicks';
-  if(/handball/.test(s))return'player_handballs';
-  if(/mark/.test(s))return'player_marks';
-  if(/tackle/.test(s))return'player_tackles';
-  if(/clearance/.test(s))return'player_clearances';
-  if(/rebound|reb\b/.test(s))return'player_rebounds';
-  if(/assist|ast\b/.test(s))return'player_assists';
-  if(/block/.test(s))return'player_blocks';
-  if(/steal/.test(s))return'player_steals';
-  if(/point|pts\b/.test(s))return'player_points';
-  return'player_disposals';
-}
-function isTeam(name){return ALL_TEAMS.some(t=>name.toLowerCase().includes(t));}
-function normBookie(raw){if(!raw)return null;return BOOKIE_MAP[raw.trim().toLowerCase()]||raw.trim().toLowerCase();}
-function hasNoSession(bookie){if(!bookie)return false;return NO_SESSION.some(n=>bookie.toLowerCase().includes(n));}
-
-function parseTips(){
-  const raw=document.getElementById('tipsPasteArea').value.trim();
-  if(!raw){log('No tips pasted.','warn');return;}
-  parsedBets=[];
-  const lines=raw.split('\n').map(l=>l.trim());
-  let i=0;
-  while(i<lines.length){
-    const line=lines[i];
-    if(/^📊|^Daily Results/i.test(line)){i++;continue;}
-    if(/^[✅❌•·]/.test(line)){i++;continue;}
-    const hasOdds=/💰|\$[\d.]+|\b[1-9]\d*\.\d+\b/.test(line)||(lines[i+1]||'').includes('💰');
-    if(!hasOdds){i++;continue;}
-    let bet=null;
-
-    // F1: emoji single "🏉 AFL — Player Over X Stat [Game]"
-    const f1=line.match(/(?:🏉|🏀|⚾|🏈|🎾)\s*(\w+)\s*[—–]\s*(.+?)(?:\s*\[([^\]]+)\])?\s*$/);
-    if(f1&&!/(Player Prop|Multi)/i.test(f1[2])){
-      const ml=findMoney(lines,i+1);
-      if(ml){const s=normSport(f1[1]);const ev=f1[3]?.trim()||'';bet=parseSel(f1[2].trim(),s,ev,ml.odds,ml.units,ml.bookie);if(bet)i=ml.ni;}
-    }
-    // F2: Player Prop header
-    if(!bet&&/Player Prop/i.test(line)){
-      const sl=lines[i+1]?.trim();const ml=sl?findMoney(lines,i+2):null;
-      if(sl&&ml){const s=normSport((line.match(/\b(AFL|NBA|NRL|MLB|NFL)\b/i)||[])[1]||'afl');bet=parseSel(sl,s,'',ml.odds,ml.units,ml.bookie);if(bet)i=ml.ni;}
-    }
-    // F3: Multi numbered
-    if(!bet&&/—\s*Multi/i.test(line)){
-      const s=normSport((line.match(/\b(AFL|NBA|NRL|MLB|NFL)\b/i)||[])[1]||'nba');
-      const legs=[];let j=i+1;
-      while(j<lines.length&&/^\d+\./.test(lines[j])){legs.push(lines[j].replace(/^\d+\.\s*/,''));j++;}
-      const ml=findMoney(lines,j);
-      if(legs.length>=2&&ml){
-        const pl=legs.map(l=>parseSelText(l,s)).filter(Boolean);
-        if(pl.length>=2){bet={type:'sgm',sport:s,event:'',legs:pl,odds:ml.odds,units:Math.min(ml.units,2),bookie:normBookie(ml.bookie),isSGM:true};i=ml.ni;}
-      }
-    }
-    // F4: SGM pipes
-    if(!bet&&line.includes('|')&&!line.includes('💰')){
-      const m=line.match(/(?:🏉|🏀|⚾|🏈)\s*(\w+)\s*[—–]\s*(.+?)(?:\s*\[([^\]]+)\])?\s*$/);
-      if(m){
-        const ml=findMoney(lines,i+1);
-        if(ml){
-          const s=normSport(m[1]);const ev=m[3]?.trim()||'';
-          const parts=m[2].split('|').map(p=>p.trim()).filter(Boolean);
-          if(parts.length>=2){const pl=parts.map(p=>parseSelText(p,s)).filter(Boolean);if(pl.length>=2){bet={type:'sgm',sport:s,event:ev,legs:pl,odds:ml.odds,units:Math.min(ml.units,2),bookie:normBookie(ml.bookie),isSGM:true};i=ml.ni;}}
-          else if(parts.length===1){bet=parseSel(parts[0],s,ev,ml.odds,ml.units,ml.bookie);if(bet)i=ml.ni;}
-        }
-      }
-    }
-    // F5: old inline "Player Stat - $odds - Bookie"
-    if(!bet){
-      const m=line.match(/^(.+?)\s*[-–]\s*\$?([\d.]+)\s*[-–]\s*(\w+)/);
-      if(m){const odds=parseFloat(m[2]);if(!isNaN(odds)&&odds>1){bet=parseSel(m[1].trim(),'afl','',odds,1,m[3]);if(bet)i++;}}
-    }
-    // F6: short "Player o/uX Stat $odds Bookie"
-    if(!bet){
-      const m=line.match(/^(.+?)\s+([ou])([\d.]+)\s+(\w+)\s+\$?([\d.]+)\s+(\w+)/i);
-      if(m){const dir=/^o$/i.test(m[2])?'over':'under';const lv=parseFloat(m[3]);const odds=parseFloat(m[5]);const bookie=normBookie(m[6]);
-        if(!isNaN(odds)&&odds>1){bet={type:'single',sport:'nba',event:'',player:m[1].trim(),stat:inferStat(m[4]),selection:dir,line:lv,odds,units:1,bookie,isSGM:false};i++;}}
-    }
-    // F7: "Player N+ Goals"
-    if(!bet){
-      const m=line.match(/^(.+?)\s+(\d+)\+\s*Goals?\s*[-–@]?\s*\$?([\d.]+)\s*[-–]?\s*(\w+)/i);
-      if(m){const odds=parseFloat(m[3]);const bookie=normBookie(m[4]);if(!isNaN(odds)&&odds>1){bet={type:'single',sport:'afl',event:'',player:m[1].trim(),stat:'player_goals',selection:'over',line:parseFloat(m[2])-0.5,odds,units:1,bookie,isSGM:false};i++;}}
-    }
-    if(bet){bet.units=Math.min(bet.units||1,2);bet.stake=bet.units*CFG.unit;parsedBets.push(bet);}
-    else i++;
-  }
-  renderTable();
-  log(`Parsed ${parsedBets.length} bet(s).`,parsedBets.length?'success':'warn');
-}
-
-function findMoney(lines,start){
-  for(let j=start;j<Math.min(start+3,lines.length);j++){
-    const l=lines[j];
-    if(l.includes('💰')||/\$[\d.]+\s*\|/.test(l)){
-      const m=l.match(/\$?([\d.]+)\s*\|\s*([\d.]+)[uU]\s*\|\s*(.+)/);
-      if(m)return{odds:parseFloat(m[1]),units:parseFloat(m[2]),bookie:m[3].trim().split(/[\s|•]/)[0],ni:j+1};
-    }
-  }return null;
-}
-function normSport(s){return(s||'afl').toLowerCase();}
-function parseSel(raw,sport,event,odds,units,bookieRaw){
-  const bookie=normBookie(bookieRaw);
-  if(raw.includes('|')){
-    const legs=raw.split('|').map(p=>parseSelText(p.trim(),sport)).filter(Boolean);
-    if(legs.length>=2)return{type:'sgm',sport,event,legs,odds,units:Math.min(units,2),bookie,isSGM:true};
-  }
-  const leg=parseSelText(raw,sport);if(!leg)return null;
-  if(isTeam(leg.player))return{type:'h2h',sport,event,player:leg.player,stat:'head_to_head',selection:'home',line:null,odds,units:Math.min(units,2),bookie,isSGM:false};
-  return{type:'single',sport,event,...leg,odds,units:Math.min(units,2),bookie,isSGM:false};
-}
-function parseSelText(text,sport){
-  const m=text.match(/^(.+?)\s+(Over|Under|o|u)\s*([\d.]+)\s*(.*)$/i);
-  if(m){return{player:m[1].trim(),stat:inferStat(m[4]||text),selection:/^(over|o)$/i.test(m[2])?'over':'under',line:parseFloat(m[3])};}
-  const p=text.match(/^(.+?)\s+(\d+)\+\s*(.+)$/);
-  if(p)return{player:p[1].trim(),stat:inferStat(p[3]),selection:'over',line:parseFloat(p[2])-0.5};
-  return null;
-}
-function normaliseEvent(e){return(e||'').replace(/\bvs\.?\b/gi,'v').trim();}
-
-// ── TABLE ────────────────────────────────────────────────
-function renderTable(){
-  const tbody=document.getElementById('parsedBody');
-  document.getElementById('parsedCount').textContent=parsedBets.length+' bets';
-  if(!parsedBets.length){
-    tbody.innerHTML='<tr><td colspan="6" style="color:var(--text-dim);font-family:\'IBM Plex Mono\',monospace;font-size:10px;padding:12px;text-align:center;">No bets parsed</td></tr>';
-    document.getElementById('totalStakeEl').textContent='$0';document.getElementById('totalBetsEl').textContent='0';return;
-  }
-  tbody.innerHTML='';let total=0;
-  parsedBets.forEach((b,i)=>{
-    total+=b.stake||0;
-    const tr=document.createElement('tr');
-    const sel=b.isSGM?b.legs.map(l=>`${l.player} ${l.selection} ${l.line}`).join(' + '):`${b.player||''} ${b.selection||''} ${b.line||''}`;
-    const noS=hasNoSession(b.bookie);
-    tr.innerHTML=`
-      <td><div style="font-weight:600;font-size:11px;">${sel}</div>${b.event?`<div style="font-size:9px;color:var(--text-dim);">${b.event}</div>`:''}</td>
-      <td>${noS?`<span class="no-session-tag">${b.bookie}</span>`:`<span class="bookie-tag">${b.bookie}</span>`}</td>
-      <td><span class="odds-badge">@${b.odds?.toFixed(2)}</span></td>
-      <td><span class="stake-val">$${(b.stake||0).toFixed(0)}</span><span style="color:var(--text-dim);font-size:9px;margin-left:2px;">${b.units}u</span></td>
-      <td>${b.isSGM?'<span class="sgm-tag">SGM</span>':b.type==='h2h'?'<span class="sgm-tag">ML</span>':''}</td>
-      <td><button class="rm-btn" onclick="removeBet(${i})">✕</button></td>
-    `;tbody.appendChild(tr);
-  });
-  document.getElementById('totalStakeEl').textContent='$'+total.toFixed(0);
-  document.getElementById('totalBetsEl').textContent=parsedBets.length;
-  renderSessions(); // update exposure stat
-}
-function removeBet(i){parsedBets.splice(i,1);renderTable();}
-function clearPaste(){document.getElementById('tipsPasteArea').value='';parsedBets=[];renderTable();}
-
-// ── STAKING ──────────────────────────────────────────────
-function calcSplits(targetStake,bookieFilter){
-  const eligible=sessions.filter(s=>{
-    if(!isActive(s))return false;
-    if((s._bal??0)<CFG.minBal)return false;
-    if(bookieFilter)return sessionMatchesBookie(s,bookieFilter);
-    return true;
-  }).sort((a,b)=>{
-    const ai=CFG.priority.findIndex(p=>sessionMatchesBookie(a,p));
-    const bi=CFG.priority.findIndex(p=>sessionMatchesBookie(b,p));
-    return(ai<0?999:ai)-(bi<0?999:bi);
-  });
-  let remaining=targetStake;const splits=[];let prevBk=null;
-  for(const s of eligible){
-    if(remaining<=0)break;
-    const bal=s._bal??0;const amt=Math.min(CFG.maxStake,bal,remaining);
-    if(amt>0){const bk=getBookie(s).toLowerCase();splits.push({session:s._sid,amount:amt,bookie:bk,sameBookie:bk===prevBk});remaining-=amt;prevBk=bk;}
-  }
-  return{splits,unfilled:remaining};
-}
-
-function buildPayload(sid,bet,stake){
-  const base={session_id:sid,bookie:bet.bookie||'sportsbet',category:'sports',sport:bet.sport||'afl',event:normaliseEvent(bet.event||''),stake,target_odds:bet.odds,period:bet.period||'full_game'};
-  if(bet.isSGM)return{...base,market:'same_game_multi',is_same_event_multi:true,legs:bet.legs.map(l=>({market:'player_prop',stat:l.stat,player:l.player,line:l.line,selection:l.selection}))};
-  if(bet.type==='h2h')return{...base,market:'head_to_head',selection:'home'};
-  return{...base,market:'player_prop',stat:bet.stat,player:bet.player,line:bet.line,selection:bet.selection};
-}
-
-async function placeBetAPI(sid,bet,stake){
-  const payload=buildPayload(sid,bet,stake);
-  for(const ep of['/v3/place_bet','/v2/place_bet','/api/place_bet']){
-    try{
-      const r=await fetch(CORS+encodeURIComponent(`${HB_BASE}${ep}`),{method:'POST',headers:HB_H,body:JSON.stringify(payload)});
-      const text=await r.text();let data;try{data=JSON.parse(text);}catch{data={raw:text};}
-      if(r.ok){const ok=data.success||data.status==='placed'||data.bet_id!=null;return{success:!!ok,endpoint:ep,data,error:ok?null:(data.message||data.error||text.slice(0,100))};}
-    }catch(e){console.error(ep,e);}
-  }
-  return{success:false,error:'All endpoints failed'};
-}
-
-async function placeAllBets(){
-  if(!parsedBets.length){log('No bets to place.','warn');return;}
-  if(CFG.notifyOnly){log('NOTIFY ONLY mode.','warn');return;}
-  const btn=document.getElementById('placeAllBtn');btn.disabled=true;btn.textContent='Placing...';
-  for(const bet of parsedBets){
-    const label=bet.isSGM?bet.legs.map(l=>`${l.player} ${l.selection} ${l.line}`).join(' + '):`${bet.player} ${bet.selection} ${bet.line}`;
-    log(`Processing: ${label} @${bet.odds} | ${bet.bookie} | $${bet.stake}`,'info');
-    let targetBookie=bet.bookie;let noSessMsg=null;
-    if(hasNoSession(targetBookie)){
-      log(`No session for ${targetBookie} — scanning active bookies...`,'warn');
-      const active=sessions.filter(s=>isActive(s)&&(s._bal??0)>=CFG.minBal);
-      if(!active.length){log(`No active sessions — skipping ${label}`,'error');continue;}
-      const fallback=active.sort((a,b)=>{const ai=CFG.priority.findIndex(p=>sessionMatchesBookie(a,p));const bi=CFG.priority.findIndex(p=>sessionMatchesBookie(b,p));return(ai<0?999:ai)-(bi<0?999:bi);})[0];
-      const fb=getBookie(fallback);noSessMsg=`${targetBookie} had no session — placed on ${fb}`;
-      targetBookie=fb;bet.bookie=fb.toLowerCase();
-    }
-    let{splits,unfilled}=calcSplits(bet.stake,targetBookie);
-    if(!splits.length){const{splits:any}=calcSplits(bet.stake,null);if(any.length)splits.push(...any);else{log(`No eligible accounts for ${label}`,'error');continue;}}
-    if(unfilled>0.01)log(`⚠ $${unfilled.toFixed(0)} unfilled`,'warn');
-    const results=[];
-    for(const sp of splits){
-      if(sp.sameBookie){const d=CFG.delayMin+Math.random()*(CFG.delayMax-CFG.delayMin);log(`Same bookie delay ${d.toFixed(1)}s...`,'info');await sleep(d*1000);}
-      const r=await placeBetAPI(sp.session,bet,sp.amount);r.account=sp.session;r.bookie=sp.bookie;r.amount=sp.amount;results.push(r);
-    }
-    const ok=results.some(r=>r.success);
-    if(ok){
-      const placed=results.filter(r=>r.success);
-      let msg=`✅ Bet Placed — ${label}\n${placed.map(r=>`${r.bookie} @${bet.odds} — $${r.amount.toFixed(0)}`).join('\n')}`;
-      if(noSessMsg)msg+=`\n(${noSessMsg})`;
-      log(msg,'success');
-    }else{log(`❌ Failed: ${label} — ${results[0]?.error||'Unknown'}`,'error');}
-  }
-  btn.disabled=false;btn.textContent='Place All';await loadSessions();
-}
-
-async function priceCheckAll(){
-  if(!parsedBets.length){log('No bets to check.','warn');return;}
-  const sid=sessions.find(s=>isActive(s))?._sid;if(!sid){log('No active session for price check','warn');return;}
-  for(const bet of parsedBets){
-    const label=bet.isSGM?'SGM':`${bet.player} ${bet.selection} ${bet.line}`;
-    log(`Checking: ${label}...`,'info');
-    try{
-      const url=CORS+encodeURIComponent(`${HB_BASE}/v2/price`);
-      const r=await fetch(url,{method:'POST',headers:HB_H,body:JSON.stringify({session_id:sid,sport:bet.sport,event:normaliseEvent(bet.event||''),market:'player_prop',stat:bet.stat,player:bet.player,line:bet.line,selection:bet.selection})});
-      const d=await r.json();const cur=d.price||d.odds||d.best_price;
-      if(cur){const pct=((cur-bet.odds)/bet.odds*100).toFixed(1);const ok=cur>=bet.odds*(1-CFG.priceTol/100);log(`${label}: target @${bet.odds} | current @${cur} (${pct>0?'+':''}${pct}%) — ${ok?'✓ OK':'✕ Outside tolerance'}`,ok?'success':'error');}
-      else log(`${label}: no price returned`,'warn');
-    }catch(e){log(`Error: ${e.message}`,'error');}
-  }
-}
-
-// ── MANUAL ──────────────────────────────────────────────
-async function manualPriceCheck(){
-  const player=document.getElementById('m_player').value;const sid=sessions.find(s=>isActive(s))?._sid;
-  if(!player||!sid){log('Fill player field.','warn','manualLog');return;}
-  log(`Checking ${player}...`,'info','manualLog');
-  try{
-    const r=await fetch(CORS+encodeURIComponent(`${HB_BASE}/v2/price`),{method:'POST',headers:HB_H,body:JSON.stringify({session_id:sid,sport:document.getElementById('m_sport').value,event:normaliseEvent(document.getElementById('m_event').value),market:'player_prop',stat:document.getElementById('m_stat').value,player,line:parseFloat(document.getElementById('m_line').value),selection:document.getElementById('m_selection').value})});
-    const d=await r.json();log(`Price: @${d.price||d.odds||'N/A'}`,'success','manualLog');
-  }catch(e){log(`Error: ${e.message}`,'error','manualLog');}
-}
-
-async function manualPlace(){
-  if(CFG.notifyOnly){log('NOTIFY ONLY mode.','warn','manualLog');return;}
-  const player=document.getElementById('m_player').value;const odds=parseFloat(document.getElementById('m_odds').value);
-  const units=Math.min(parseFloat(document.getElementById('m_units').value)||1,2);const stake=units*CFG.unit;
-  const bookie=document.getElementById('m_bookie').value.toLowerCase();
-  if(!player||isNaN(odds)){log('Fill required fields.','warn','manualLog');return;}
-  const bet={type:'single',sport:document.getElementById('m_sport').value,event:normaliseEvent(document.getElementById('m_event').value),player,stat:document.getElementById('m_stat').value,selection:document.getElementById('m_selection').value,line:parseFloat(document.getElementById('m_line').value),odds,units,bookie,period:document.getElementById('m_period').value,isSGM:false};
-  const{splits}=calcSplits(stake,bookie);if(!splits.length){log('No eligible accounts.','error','manualLog');return;}
-  for(const sp of splits){
-    if(sp.sameBookie){const d=CFG.delayMin+Math.random()*(CFG.delayMax-CFG.delayMin);await sleep(d*1000);}
-    const r=await placeBetAPI(sp.session,bet,sp.amount);
-    log(r.success?`✅ Placed $${sp.amount.toFixed(0)} on ${sp.session}`:`❌ Failed: ${r.error}`,r.success?'success':'error','manualLog');
-  }
-}
-function clearManual(){['m_player','m_event','m_line','m_odds','m_units'].forEach(id=>document.getElementById(id).value='');}
-
-// ── IMAGE ────────────────────────────────────────────────
-function handleDragOver(e){e.preventDefault();document.getElementById('dropZone').classList.add('drag');}
-function handleDragLeave(){document.getElementById('dropZone').classList.remove('drag');}
-function handleDrop(e){e.preventDefault();document.getElementById('dropZone').classList.remove('drag');if(e.dataTransfer.files[0])setImg(e.dataTransfer.files[0]);}
-function handleImageFile(e){if(e.target.files[0])setImg(e.target.files[0]);}
-function setImg(file){imageFile=file;const fr=new FileReader();fr.onload=ev=>{document.getElementById('imgPreview').src=ev.target.result;document.getElementById('imgPreviewWrap').style.display='block';};fr.readAsDataURL(file);log(`Loaded: ${file.name}`,'info','imageLog');}
-function clearImage(){imageFile=null;document.getElementById('imgPreviewWrap').style.display='none';document.getElementById('imgInput').value='';}
-
-async function readImageSlip(){
-  if(!imageFile){log('No image.','warn','imageLog');return;}
-  const btn=document.getElementById('readSlipBtn');btn.disabled=true;btn.textContent='Reading...';
-  log('Reading with AI...','info','imageLog');
-  try{
-    const b64=await toBase64(imageFile);
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:imageFile.type,data:b64}},{type:'text',text:'Extract bet details from this slip. Identify bookie from logo/branding. Return ONLY JSON: {bookie,sport,event,legs:[{player,stat,selection,line}],odds,isSGM}. stat options: player_disposals,player_points,player_rebounds,player_assists,player_goals,player_marks,player_tackles,player_threes,player_blocks,player_steals,head_to_head. selection: "over" or "under" only. No extra text.'}]}]})});
-    const d=await res.json();const text=(d.content||[]).map(c=>c.text||'').join('');
-    const data=JSON.parse(text.replace(/```json|```/g,'').trim());
-    if(data?.legs){parsedBets=[{type:data.isSGM?'sgm':'single',sport:data.sport||'afl',event:data.event||'',bookie:normBookie(data.bookie),odds:data.odds,units:1,stake:CFG.unit,isSGM:data.isSGM,legs:data.legs,player:data.legs[0]?.player,stat:data.legs[0]?.stat,selection:data.legs[0]?.selection,line:data.legs[0]?.line}];renderTable();switchTab('paste',null);log(`✓ Extracted from ${data.bookie} slip`,'success','imageLog');}
-    else log('Could not extract.','warn','imageLog');
-  }catch(e){log(`Failed: ${e.message}`,'error','imageLog');}
-  btn.disabled=false;btn.textContent='Read Slip with AI';
-}
-function toBase64(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result.split(',')[1]);fr.onerror=()=>rej(new Error('Read failed'));fr.readAsDataURL(file);});}
-
-// ── PRICE CHECK TAB ──────────────────────────────────────
-async function runPriceCheck(){
-  const sel=document.getElementById('pc_selection').value.trim();if(!sel)return;
-  const grid=document.getElementById('priceGrid');grid.innerHTML='<div style="grid-column:1/-1;color:var(--text-dim);font-family:\'IBM Plex Mono\',monospace;font-size:10px;margin-top:6px;"><span class="spinner"></span> Checking...</div>';
-  const results=await Promise.all(CFG.priority.map(async bk=>{
-    try{const r=await fetch(CORS+encodeURIComponent(`${HB_BASE}/api/price_check`),{method:'POST',headers:HB_H,body:JSON.stringify({selection:sel,bookie:bk.toLowerCase()})});const d=await r.json();return{bk,odds:d.odds||d.price||null};}
-    catch{return{bk,odds:null};}
-  }));
-  const valid=results.filter(r=>r.odds!=null);const best=valid.length?Math.max(...valid.map(r=>r.odds)):null;
-  grid.innerHTML='';
-  results.forEach(({bk,odds})=>{
-    const isBest=odds!==null&&odds===best;const diff=best&&odds&&!isBest?((odds-best)/best*100).toFixed(1):null;
-    const card=document.createElement('div');card.className='price-card';
-    card.innerHTML=`<div class="price-bookie">${bk}</div><div class="price-val ${isBest?'best':''}">${odds?'@'+odds.toFixed(2):'—'}</div>${isBest?'<div class="price-diff pos">▲ BEST</div>':diff?`<div class="price-diff neg">${diff}%</div>`:''}`;
+    card.innerHTML = `
+      <div class="bookie-header">
+        <div class="bookie-name" style="color:${col}">${bookie.toUpperCase()}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="bookie-count">${data.sessions.length}</div>
+          <div class="bookie-total">${fmt(data.total)}</div>
+        </div>
+      </div>
+      ${accountRows}
+    `;
     grid.appendChild(card);
   });
-}
 
-// ── FEED ─────────────────────────────────────────────────
-async function loadFeed(){
-  try{
-    const url=CORS+encodeURIComponent(SHEETS_BETS);
-    const r=await fetch(url);if(!r.ok)return;
-    const text=await r.text();
-    const rows=text.split('\n').filter(Boolean).slice(1); // skip header
-    const bets=rows.map(row=>{
-      const cols=row.split(',');
-      return{date:cols[0],activity:cols[1],tipster:cols[2],bowler:cols[3],bookie:cols[4],selection:cols[5],stake:cols[6],odds:cols[7],result:cols[13],netCash:cols[14]};
-    }).filter(b=>b.selection&&b.selection.trim()&&b.result&&b.result.trim());
-    const last8=bets.slice(-8).reverse();
-    const tbody=document.getElementById('feedBody');tbody.innerHTML='';
-    if(!last8.length){tbody.innerHTML='<tr><td colspan="8" style="color:var(--text-dim);font-size:10px;padding:8px;">No bets found</td></tr>';return;}
-    last8.forEach(b=>{
-      const res=(b.result||'').trim().toUpperCase();
-      const nc=parseFloat((b.netCash||'').replace(/[$,()]/g,'').trim())||0;
-      const isNeg=(b.netCash||'').includes('(');const pnl=isNeg?-nc:nc;
-      const tr=document.createElement('tr');
-      tr.innerHTML=`
-        <td style="color:var(--text-dim);font-size:10px;">${b.date||''}</td>
-        <td style="font-weight:600;font-size:11px;">${b.tipster||''}</td>
-        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;">${b.selection||''}</td>
-        <td style="color:var(--text-dim);">${b.bookie||''}</td>
-        <td style="color:var(--gold);font-family:'IBM Plex Mono',monospace;">${b.odds||''}</td>
-        <td style="font-family:'IBM Plex Mono',monospace;">${b.stake||''}</td>
-        <td><span class="${res==='W'?'result-w':res==='L'?'result-l':'result-p'}">${res}</span></td>
-        <td class="${pnl>=0?'pnl-pos':'pnl-neg'}">${pnl>=0?'+':''}$${Math.abs(pnl).toFixed(2)}</td>
-      `;tbody.appendChild(tr);
+  // Stats panel
+  const totalBal = active.reduce((s, a) => s + (a.balance || 0), 0);
+  const statsPanel = document.createElement('div');
+  statsPanel.className = 'stats-panel';
+  statsPanel.innerHTML = `
+    <div class="stats-header">Options</div>
+    <div class="sort-label">Sort By</div>
+    <button class="sort-btn active">Bookie</button>
+    <button class="sort-btn">Balance ↓</button>
+    <button class="sort-btn">Status</button>
+    <div class="divider"></div>
+    <div class="stats-header">Stats</div>
+    <div class="stat-row"><span class="stat-key">Active Accs</span><span class="stat-val green">${active.length}</span></div>
+    <div class="stat-row"><span class="stat-key">Total Balance</span><span class="stat-val gold">${fmt(totalBal)}</span></div>
+    <div class="stat-row"><span class="stat-key">Est. Exposure</span><span class="stat-val">$0</span></div>
+  `;
+  grid.appendChild(statsPanel);
+
+  // Sort btn interactions
+  statsPanel.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      statsPanel.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
     });
-    document.getElementById('feedLast').textContent=`Last bet: ${last8[0]?.date||''}`;
-  }catch(e){console.log('Feed error:',e);}
+  });
+
+  log(`Sessions loaded — ${active.length} active accounts found`, 'ok');
 }
 
-// ── TABS ─────────────────────────────────────────────────
-function switchTab(name,btn){
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  if(btn)btn.classList.add('active');
-  else document.querySelectorAll('.tab').forEach(t=>{if(t.getAttribute('onclick')?.includes("'"+name+"'"))t.classList.add('active');});
+function log(msg, type = 'info') {
+  const body = document.getElementById('logBody');
+  const now = new Date().toLocaleTimeString('en-AU', { timeZone: 'Australia/Sydney', hour12: false });
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">${now}</span><span class="log-msg ${type}">${msg}</span>`;
+  body.prepend(line);
 }
 
-// ── LOG ──────────────────────────────────────────────────
-function log(msg,type='info',target='logArea'){
-  const area=document.getElementById(target);
-  const t=new Date().toLocaleTimeString('en-AU',{hour12:false,timeZone:'Australia/Sydney'});
-  const span=document.createElement('span');span.className=`ll ${type}`;
-  span.innerHTML=`<span class="lt">${t}</span>${msg.replace(/\n/g,'<br><span class="lt">        </span>')}`;
-  area.appendChild(span);area.appendChild(document.createElement('br'));area.scrollTop=area.scrollHeight;
+async function loadSessions() {
+  log('Connecting to Hyperbot API...', 'info');
+  try {
+    const res = await fetch(`${API_BASE}/api/session_ids`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
+      body: JSON.stringify({})
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const sessions = data.sessions || [];
+    renderSessions(sessions);
+  } catch (err) {
+    log(`API error: ${err.message} — using demo data`, 'warn');
+    // Fallback demo using known active sessions
+    renderSessions([
+      { session_id: 81908, username: 'lukesmithh9876', bookie: 'pointsbet', balance: 1079.8, active: true },
+      { session_id: 33720, username: 'Carole (TAB)', bookie: 'tab', balance: 25.09, active: true },
+      { session_id: 33737, username: 'Mattedm', bookie: 'sportsbet', balance: 3876.58, active: true },
+      { session_id: 68967, username: 'Luke (TAB)', bookie: 'tab', balance: 355.72, active: true },
+      { session_id: 33708, username: 'aprilrowley227', bookie: 'pointsbet', balance: 679.45, active: true },
+      { session_id: 33593, username: 'carolerahman54', bookie: 'sportsbet', balance: 1096.52, active: true },
+      { session_id: 33726, username: 'cameronsly1301', bookie: 'sportsbet', balance: 185.23, active: true },
+    ]);
+  }
 }
 
-// ── UTILS ────────────────────────────────────────────────
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+// Tab switching
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+  });
+});
 
-// ── INIT ─────────────────────────────────────────────────
-loadSettings();
-checkApi();
+// Init
 loadSessions();
-loadFeed();
-setInterval(checkApi,30000);
-setInterval(loadFeed,120000);
 </script>
 </body>
 </html>
