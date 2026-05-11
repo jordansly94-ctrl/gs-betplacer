@@ -550,8 +550,14 @@ async function loadSessions() {
 }
 
 function getSid(s) {
+  if (!s) return '';
   if (typeof s === 'string') return s;
-  return s.session_id || s.id || s.sessionId || String(s);
+  if (typeof s === 'number') return String(s);
+  const id = s.session_id || s.id || s.sessionId || s.session || s.username || null;
+  if (id) return String(id);
+  // Last resort - stringify but never return [object Object]
+  const str = JSON.stringify(s);
+  return str.length < 100 ? str : String(Object.values(s)[0] || '');
 }
 
 function sessionMatchesBookie(s, bookie) {
