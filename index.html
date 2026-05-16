@@ -624,10 +624,20 @@ async function loadSessions() {
       const bal    = s._bal;
       const ok     = bal !== null && bal >= CFG.minBal;
       const sid    = getSid(s);
-      const parts  = sid.split('_');
-      const bookie = parts[0] || 'Unknown';
-      const name   = parts.slice(1).join(' ') || sid;
-      const card   = document.createElement('div');
+
+      // Extract bookie and name from session object fields (don't rely on sid.split)
+      const bookie = (
+        s.bookie || s.bookmaker || s.platform || s.site ||
+        (typeof sid === 'string' ? sid.split('_')[0] : '') ||
+        'Unknown'
+      ).toString();
+      const name = (
+        s.username || s.account_name || s.name || s.email ||
+        (typeof sid === 'string' ? sid.split('_').slice(1).join(' ') : '') ||
+        sid
+      ).toString();
+
+      const card = document.createElement('div');
       card.className = 'sc' + (ok ? '' : (bal === null ? ' no-session' : ' below'));
       card.innerHTML = `
         <div class="sc-bookie">${bookie.toUpperCase()}</div>
@@ -643,7 +653,10 @@ async function loadSessions() {
 
 function getSid(s) {
   if (typeof s === 'string') return s;
-  return s.session_id || s.id || s.sessionId || String(s);
+  if (typeof s === 'object' && s !== null) {
+    return s.session_id || s.id || s.sessionId || s.session || s.account_id || JSON.stringify(s).slice(0,40);
+  }
+  return String(s);
 }
 
 function sessionMatchesBookie(s, bookie) {
