@@ -557,63 +557,87 @@ function getPriorityOrder() { return [...document.querySelectorAll('.pi-name')].
 
 // ── API STATUS ─────────────────────────────────────────────────────────────
 async function checkApi() {
-  try {
-    const r = await fetch(CORS + encodeURIComponent(`${HB_BASE}/accounts/get_active_sessions`), { method:'POST', headers:HB_H, body:'{}' });
-    document.getElementById('apiDot').className = r.ok ? 'dot' : 'dot red';
-    document.getElementById('apiStatusText').textContent = r.ok ? 'Hyperbot OK' : 'API Error';
-  } catch {
-    document.getElementById('apiDot').className = 'dot red';
-    document.getElementById('apiStatusText').textContent = 'Offline';
+  const r = await hbFetch('/accounts/get_active_sessions');
+  document.getElementById('apiDot').className = r ? 'dot' : 'dot red';
+  document.getElementById('apiStatusText').textContent = r ? 'Hyperbot OK' : 'Offline';
+}
+
+// ── CORS FETCH — tries multiple proxies ────────────────────────────────────
+const CORS_PROXIES = [
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://cors-anywhere.herokuapp.com/${url}`,
+];
+
+async function hbFetch(path, opts = {}) {
+  const fullUrl = `${HB_BASE}${path}`;
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const r = await fetch(proxy(fullUrl), {
+        method: opts.method || 'POST',
+        headers: HB_H,
+        body: opts.body !== undefined ? opts.body : '{}',
+        signal: AbortSignal.timeout(8000),
+      });
+      if (r.ok) return r;
+    } catch {}
   }
+  return null;
 }
 
 // ── SESSIONS ───────────────────────────────────────────────────────────────
 async function loadSessions() {
   const row = document.getElementById('sessionsRow');
-  row.innerHTML = '<div style="color:var(--text-dim);font-family:\'IBM Plex Mono\',monospace;font-size:11px;padding:6px;"><span class="spinner"></span> Loading...</div>';
+  row.innerHTML = '<div style="color:var(--text-dim);font-family:\'IBM Plex Mono\',monospace;font-size:11px;padding:6px;"><span class="spinner"></span> Loading sessions...</div>';
   try {
-    const endpoints = ['/accounts/get_active_sessions', '/accounts/get_sessions', '/api/session_ids'];
     let data = null;
-    for (const ep of endpoints) {
-      try {
-        const r = await fetch(CORS + encodeURIComponent(`${HB_BASE}${ep}`), { method:'POST', headers:HB_H, body:'{}' });
-        if (r.ok) { data = await r.json(); break; }
-      } catch {}
+    for (const ep of ['/accounts/get_active_sessions', '/accounts/get_sessions', '/api/session_ids']) {
+      const r = await hbFetch(ep);
+      if (r) { data = await r.json(); break; }
     }
-    if (!data) throw new Error('All session endpoints failed');
+    if (!data) throw new Error('All session endpoints failed — check CORS / API key');
 
     let raw = Array.isArray(data) ? data : (data.sessions || data.active_sessions || data.session_ids || []);
     sessions = raw;
     row.innerHTML = '';
-    if (!raw.length) { row.innerHTML = '<div style="color:var(--text-dim);font-family:\'IBM Plex Mono\',monospace;font-size:11px;">No sessions found.</div>'; return; }
+    if (!raw.length) {
+      row.innerHTML = '<div style="color:var(--text-dim);font-family:\'IBM Plex Mono\',monospace;font-size:11px;padding:6px;">No active sessions found.</div>';
+      return;
+    }
 
     const balResults = await Promise.all(raw.map(async s => {
       const sid = getSid(s);
       let bal = null;
-      for (const ep of ['/v2/balance', '/api/balance']) {
-        try {
-          const r = await fetch(CORS + encodeURIComponent(`${HB_BASE}${ep}`), { method:'POST', headers:HB_H, body:JSON.stringify({ session_id: sid }) });
-          if (r.ok) { const d = await r.json(); bal = d.balance ?? d.available_balance ?? null; break; }
-        } catch {}
+      for (const ep of ['/api/balance', '/v2/balance']) {
+        const r = await hbFetch(ep, { body: JSON.stringify({ session_id: sid }) });
+        if (r) {
+          const d = await r.json();
+          bal = d.balance ?? d.available_balance ?? d.cash_balance ?? null;
+          if (bal !== null) break;
+        }
       }
-      return { ...( typeof s === 'object' ? s : { session_id: s } ), _bal: bal };
+      return { ...(typeof s === 'object' ? s : { session_id: s }), _bal: bal };
     }));
 
     sessions = balResults;
     balResults.forEach(s => {
-      const bal  = s._bal;
-      const ok   = bal !== null && bal >= CFG.minBal;
-      const sid  = getSid(s);
-      const parts = sid.split('_');
+      const bal    = s._bal;
+      const ok     = bal !== null && bal >= CFG.minBal;
+      const sid    = getSid(s);
+      const parts  = sid.split('_');
       const bookie = parts[0] || 'Unknown';
       const name   = parts.slice(1).join(' ') || sid;
       const card   = document.createElement('div');
-      card.className = 'sc' + (ok ? '' : ' below');
-      card.innerHTML = `<div class="sc-bookie">${bookie}</div><div class="sc-name">${name}</div><div class="sc-bal">${bal !== null ? '$'+parseFloat(bal).toFixed(2) : '—'}</div><div class="sc-note">${ok ? '✓ Active' : '⚠ Below minimum'}</div>`;
+      card.className = 'sc' + (ok ? '' : (bal === null ? ' no-session' : ' below'));
+      card.innerHTML = `
+        <div class="sc-bookie">${bookie.toUpperCase()}</div>
+        <div class="sc-name">${name}</div>
+        <div class="sc-bal">${bal !== null ? '$' + parseFloat(bal).toFixed(2) : '—'}</div>
+        <div class="sc-note">${ok ? '✓ Active' : bal === null ? '? No balance' : '⚠ Below min'}</div>`;
       row.appendChild(card);
     });
   } catch(e) {
-    row.innerHTML = `<div style="color:var(--red);font-family:'IBM Plex Mono',monospace;font-size:11px;">Failed: ${e.message}</div>`;
+    row.innerHTML = `<div style="color:var(--red);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px;">⚠ Sessions failed: ${e.message}<br><span style="color:var(--text-dim);">Click ↻ Refresh Balances to retry</span></div>`;
   }
 }
 
@@ -1026,36 +1050,16 @@ function normaliseEvent(e) {
   return e.replace(/\bvs\.?\b/gi, 'v').trim();
 }
 
-// ── PLACE BET — v3 async with poll ────────────────────────────────────────
-async function pollBetStatus(correlationId, timeoutMs = 30000, intervalMs = 2500) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    await sleep(intervalMs);
-    try {
-      const url = CORS + encodeURIComponent(`${HB_BASE}/api/bet_status`);
-      const r = await fetch(url, { method:'POST', headers:HB_H, body: JSON.stringify({ correlation_ids: [correlationId] }) });
-      if (!r.ok) continue;
-      const d = await r.json();
-      const st = (d.statuses || [])[0];
-      if (st && st.status !== 'pending') return st.result || st;
-    } catch {}
-  }
-  throw new Error(`Poll timeout for ${correlationId}`);
-}
-
 async function placeBetAPI(sid, bet, stake) {
   const payload = buildPayload(sid, bet, stake);
-  // Try v3 first (async), then fall back only if truly unavailable
   for (const ep of ['/v3/place_bet', '/api/place_bet']) {
     try {
-      const url = CORS + encodeURIComponent(`${HB_BASE}${ep}`);
-      const r = await fetch(url, { method:'POST', headers:HB_H, body:JSON.stringify(payload) });
-      if (r.status === 410) continue; // Sunset — try next
+      const r = await hbFetch(ep, { body: JSON.stringify(payload) });
+      if (!r) continue;
+      if (r.status === 410) continue;
       const text = await r.text();
       let data; try { data = JSON.parse(text); } catch { data = { raw: text }; }
-      if (!r.ok) { return { success: false, endpoint: ep, error: data.message || data.error || text.slice(0,120) }; }
 
-      // v3 async — has correlation_id
       if (data.correlation_id) {
         try {
           const result = await pollBetStatus(data.correlation_id);
@@ -1066,7 +1070,6 @@ async function placeBetAPI(sid, bet, stake) {
         }
       }
 
-      // Sync response (legacy or immediate)
       const ok = data.success || data.status === 'placed' || data.bet_id != null;
       return { success: !!ok, endpoint: ep, data, error: ok ? null : (data.message || data.error || text.slice(0,100)) };
     } catch(e) { console.error(ep, e); }
@@ -1168,8 +1171,7 @@ async function priceCheckAll() {
         line:   bet.line,
         selection: bet.selection,
       };
-      const url = CORS + encodeURIComponent(`${HB_BASE}/v3/price_check`);
-      const r = await fetch(url, { method:'POST', headers:HB_H, body:JSON.stringify(payload) });
+      const r = await hbFetch('/v3/price_check', { body: JSON.stringify(payload) });
       const d = await r.json();
       let cur = d.price || d.odds || d.best_price;
       if (d.correlation_id) {
@@ -1199,8 +1201,7 @@ async function manualPriceCheck() {
   if (!player || !sid) { log('Fill player field and ensure sessions are loaded.', 'warn', 'manualLog'); return; }
   log(`Checking price for ${player} via v3...`, 'info', 'manualLog');
   try {
-    const url = CORS + encodeURIComponent(`${HB_BASE}/v3/price_check`);
-    const r = await fetch(url, { method:'POST', headers:HB_H, body:JSON.stringify({ session_id:sid, sport, event, market:'player_prop', stat, player, line, selection:sel }) });
+    const r = await hbFetch('/v3/price_check', { body: JSON.stringify({ session_id:sid, sport, event, market:'player_prop', stat, player, line, selection:sel }) });
     const d = await r.json();
     if (d.correlation_id) {
       const res = await pollBetStatus(d.correlation_id, 15000, 2000);
@@ -1314,13 +1315,10 @@ async function runPriceCheck() {
   const grid = document.getElementById('priceGrid');
   grid.innerHTML = '<div style="grid-column:1/-1;color:var(--text-dim);font-family:\'IBM Plex Mono\',monospace;font-size:11px;margin-top:8px;"><span class="spinner"></span> Checking v3...</div>';
 
-  // v3/price_check returns correlation_ids (one per session), poll each
   try {
-    const url = CORS + encodeURIComponent(`${HB_BASE}/v3/price_check`);
-    const r = await fetch(url, { method:'POST', headers:HB_H, body: JSON.stringify({ selection: sel }) });
-    if (r.ok) {
+    const r = await hbFetch('/v3/price_check', { body: JSON.stringify({ selection: sel }) });
+    if (r) {
       const d = await r.json();
-      // v3 may return { correlation_ids: [...] } or direct prices
       if (d.correlation_ids) {
         grid.innerHTML = '<div style="grid-column:1/-1;color:var(--text-dim);font-family:\'IBM Plex Mono\',monospace;font-size:11px;"><span class="spinner"></span> Polling results...</div>';
         const results = await Promise.all(d.correlation_ids.map(async cid => {
@@ -1332,7 +1330,6 @@ async function runPriceCheck() {
         renderPriceGrid(results);
         return;
       }
-      // Direct price result
       if (d.prices || d.results) {
         const arr = d.prices || d.results;
         renderPriceGrid(arr.map(x => ({ bk: x.bookie || x.bookmaker, odds: x.price || x.odds })));
@@ -1344,8 +1341,8 @@ async function runPriceCheck() {
   // Fallback: parallel per-bookie checks
   const results = await Promise.all(CFG.priority.map(async bk => {
     try {
-      const url = CORS + encodeURIComponent(`${HB_BASE}/v3/price_check`);
-      const r = await fetch(url, { method:'POST', headers:HB_H, body:JSON.stringify({ selection:sel, bookie:bk.toLowerCase() }) });
+      const r = await hbFetch('/v3/price_check', { body: JSON.stringify({ selection:sel, bookie:bk.toLowerCase() }) });
+      if (!r) return { bk, odds: null };
       const d = await r.json();
       if (d.correlation_id) {
         const res = await pollBetStatus(d.correlation_id, 12000, 2000);
