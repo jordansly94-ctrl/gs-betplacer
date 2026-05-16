@@ -639,11 +639,7 @@ async function loadSessions() {
 
       const card = document.createElement('div');
       card.className = 'sc' + (ok ? '' : (bal === null ? ' no-session' : ' below'));
-      card.innerHTML = `
-        <div class="sc-bookie">${bookie.toUpperCase()}</div>
-        <div class="sc-name">${name}</div>
-        <div class="sc-bal">${bal !== null ? '$' + parseFloat(bal).toFixed(2) : '—'}</div>
-        <div class="sc-note">${ok ? '✓ Active' : bal === null ? '? No balance' : '⚠ Below min'}</div>`;
+      card.innerHTML = `<div class="sc-bookie">${bookie.toUpperCase()}</div><div class="sc-name">${name}</div><div class="sc-bal">${bal !== null ? '$'+parseFloat(bal).toFixed(2) : '—'}</div><div class="sc-note">${ok ? '✓ Active' : bal === null ? '? No balance' : '⚠ Below minimum'}</div>`;
       row.appendChild(card);
     });
   } catch(e) {
